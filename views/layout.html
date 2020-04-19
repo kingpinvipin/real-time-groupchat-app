@@ -1,0 +1,78 @@
+<html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+</head>
+<script src = "/socket.io/socket.io.js"></script>
+<script>
+   var socket = io();
+   function register() {
+      socket.emit('setUsername', {username:$("#username").val(),password:$("#password").val()});
+   };
+   function login() {
+      socket.emit('authenticate',{username:$("#username").val(),password:$("#password").val()});
+   };
+   var user;
+   socket.on('userExists', function(data) {
+      $("#error-container").html(data);
+   });
+   socket.on('userSet', function(data) {
+      user = data.data.username;
+      document.body.innerHTML = '<center><h2 id = "userid" style="color:blue;"></h2></center>\
+    <div class = "container" style="margin-top: 20px;width: 1200px;height: 650px;background-color:whitesmoke;border-radius: 20px 20px 0px 0px;" >\
+    <div id="message-container"></div>\
+    </div>\
+    <div class="row" >\
+    <div class="col-md-3"></div>\
+    <div class="col-md-6">\
+    <div class="row">\
+    <div class="col-md-10">\
+    <textarea  id = "message" class = "form-control" placeholder = "Your message here" style="margin-top: 5px;"></textarea>\
+    </div>\
+    <div class="col-md-2">\
+    <button type = "button"  class="btn btn-success btn-lg btn-block" onclick= "sendMessage()" style="margin-top: 7px;">Send</button>\
+    </div> </div> </div> <div class="col-md-3"></div> </div>';
+
+    var temp = '@' + user ;
+    $("#userid").html(temp);
+    
+    for(var i = data.join_no ; i < data.result.length ; i++){
+      $("#message-container").append('<div class="container" style="border: 2px solid #dedede;border-radius: 5px;padding: 10px; margin: 10px 0;   border-color: #ccc;background-color: #ddd;"> <b>'
+            + data.result[i].user + ' <b>: ' + data.result[i].msg + '<span style="float: right;color: #aaa;">' + data.result[i].time + '</span></div>') ;
+    }
+
+   });
+   socket.on('notAuthenticated',function(data){
+      $("#error-container").html(data);
+   })
+   function sendMessage() {
+      var msg = $("#message").val();
+      if(msg) {
+         socket.emit('msg', {message: msg, user: user});
+      }
+   }
+   socket.on('newmsg', function(data) {
+      if(user) {
+          var d = new Date();
+        $("#message-container").append('<div class="container" style="border: 2px solid #dedede;border-radius: 5px;padding: 10px; margin: 10px 0;   border-color: #ccc;background-color: #ddd;"> <b>'
+            + data.user + ' <b>: ' + data.message + '<span style="float: right;color: #aaa;">' + d + '</span></div>') ;
+      }
+   })
+</script>
+<body>
+    <div class = "container" style="margin-top: 100px;" >
+        <center><h1 style="color: cornflowerblue;">Messenger</h1></center>
+         <div class="jumbotron" style="border-radius: 25px;"> 
+             <h4 id = 'error-container' style="color: red;"></h4>
+             <br>
+             <input id = "username"  class = "form-control" type = "text" name = "username" value = "" placeholder="Enter Username">
+             <br>
+             <input id = "password" class="form-control" type="text" name="password" value="" placeholder="Enter Password">
+             <br>
+             <button type = "button" name = 'button' class="btn btn-primary" onclick= "login()">Login</button>
+              &nbsp;
+             <button type = "button" name = 'button' class="btn btn-primary" onclick= "register()">Register</button>
+         </div>
+     </div>
+</body>
+</html>
